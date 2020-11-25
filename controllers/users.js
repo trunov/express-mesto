@@ -1,24 +1,36 @@
-const path = require("path");
-
-const readFile = require("../utils/read-file");
-
-const pathToData = path.join(__dirname, "..", "data", "users.json");
+const User = require("../models/user");
 
 module.exports.getUsers = (req, res) => {
-  readFile(pathToData)
+  User.find()
     .then((data) => res.send(data))
-    .catch(() => res.status(404).send({ message: "Данный файл не существует" }));
+    .catch(() => res.status(404).send({ message: "Запрашиваемый ресурс не найден" }));
 };
 
 module.exports.getUser = (req, res) => {
-  const { id } = req.params;
-  readFile(pathToData)
-    .then((data) => {
-      const user = data.find((item) => item._id === id);
-      if (!user) {
-        return res.status(404).send({ message: "Нет пользователя с таким id" });
-      }
-      return res.send(user);
+  User.findById(req.params.id)
+    .orFail(() => {
+      const error = new Error("CastError");
+      throw error;
     })
-    .catch(() => res.status(404).send({ message: "Данный файл не существует" }));
+    .then((user) => res.send(user))
+    .catch((err) => {
+      if (err.name === "CastError") {
+        res.status(404).send({ message: "Нет пользователя с таким id" });
+        return;
+      }
+      res.status(500).send({ message: "Запрашиваемый ресурс не найден" });
+    });
+};
+
+module.exports.createUser = (req, res) => {
+  const { name, about, avatar } = req.body;
+  User.create({ name, about, avatar })
+    .then((newUser) => res.send(newUser))
+    .catch((err) => {
+      if (err.name === "ValidationError") {
+        res.status(400).send({ err });
+        return;
+      }
+      res.status(500).send({ message: "Запрашиваемый ресурс не найден" });
+    });
 };
