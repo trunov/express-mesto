@@ -14,11 +14,16 @@ module.exports.getUser = (req, res) => {
     })
     .then((user) => res.send(user))
     .catch((err) => {
-      if (err.name === "CastError") {
-        res.status(404).send({ message: "Нет пользователя с таким id" });
-        return;
+      switch (err.name) {
+        case "ValidationError":
+          res.status(400).send({ message: err.message });
+          break;
+        case "CastError":
+          res.status(404).send({ message: "Нет пользователя с таким id" });
+          break;
+        default:
+          res.status(500).send({ message: "Ошибка на стороне сервера" });
       }
-      res.status(500).send({ message: "Запрашиваемый ресурс не найден" });
     });
 };
 
@@ -27,10 +32,15 @@ module.exports.createUser = (req, res) => {
   User.create({ name, about, avatar })
     .then((newUser) => res.send(newUser))
     .catch((err) => {
-      if (err.name === "ValidationError") {
-        res.status(400).send({ err });
-        return;
+      switch (err.name) {
+        case "ValidationError":
+          res.status(400).send({ message: err.message });
+          break;
+        case "CastError":
+          res.status(404).send({ message: "в запрос переданы неправильные значения" });
+          break;
+        default:
+          res.status(500).send({ message: "Ошибка на стороне сервера" });
       }
-      res.status(500).send({ message: "Запрашиваемый ресурс не найден" });
     });
 };
