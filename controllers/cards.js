@@ -52,11 +52,9 @@ module.exports.createCard = (req, res) => {
           res.status(400).send({ message: err.message });
           break;
         case "CastError":
-          res
-            .status(404)
-            .send({
-              message: "в запросе переданы значения неправильного типа",
-            });
+          res.status(404).send({
+            message: "в запросе переданы значения неправильного типа",
+          });
           break;
         default:
           res.status(500).send({ message: "Ошибка на стороне сервера" });
@@ -72,6 +70,63 @@ module.exports.deleteCard = (req, res) => {
     })
     .then((card) => {
       res.status(200).send({ message: "карточка удалена", card });
+    })
+    .catch((err) => {
+      switch (err.name) {
+        case "ValidationError":
+          res.status(400).send({ message: err.message });
+          break;
+        case "CastError":
+          res.status(404).send({ message: "нет карточки с таким id" });
+          break;
+        default:
+          res.status(500).send({ message: "Ошибка на стороне сервера" });
+      }
+    });
+};
+
+module.exports.likeCard = (req, res) => {
+  Card.findByIdAndUpdate(
+    req.params.cardId,
+    { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
+    { new: true },
+  )
+    .orFail(() => {
+      const error = new Error("CastError");
+      throw error;
+    })
+    .then((card) => {
+      res
+        .status(200)
+        .send({ message: "лайк был поставлен данной карточке", card });
+    })
+    .catch((err) => {
+      switch (err.name) {
+        case "ValidationError":
+          res.status(400).send({ message: err.message });
+          break;
+        case "CastError":
+          res.status(404).send({ message: "нет карточки с таким id" });
+          break;
+        default:
+          res.status(500).send({ message: "Ошибка на стороне сервера" });
+      }
+    });
+};
+module.exports.dislikeCard = (req, res) => {
+  Card.findByIdAndUpdate(
+    req.params.cardId,
+    { $pull: { likes: req.user._id } }, // убрать _id из массива
+    { new: true },
+  )
+    .orFail(() => {
+      const error = new Error("CastError");
+      throw error;
+    })
+    .then((card) => {
+      res
+        .status(200)
+        .send({ message: "дизлайк был поставлен данной карточке", card });
     })
     .catch((err) => {
       switch (err.name) {
