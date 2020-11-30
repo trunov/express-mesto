@@ -6,12 +6,15 @@ module.exports.getCards = (req, res) => {
       const error = new Error("CastError");
       throw error;
     })
-    .then((cards) => res.send(cards))
+    .then((cards) => {
+      if (!cards) {
+        res.status(404).send({ message: "нет карточек" });
+      }
+      res.send(cards);
+    })
+
     .catch((err) => {
       switch (err.name) {
-        case "ValidationError":
-          res.status(400).send({ message: err.message });
-          break;
         case "CastError":
           res.status(404).send({ message: "Нет карточек" });
           break;
@@ -51,11 +54,6 @@ module.exports.createCard = (req, res) => {
         case "ValidationError":
           res.status(400).send({ message: err.message });
           break;
-        case "CastError":
-          res.status(404).send({
-            message: "в запросе переданы значения неправильного типа",
-          });
-          break;
         default:
           res.status(500).send({ message: "Ошибка на стороне сервера" });
       }
@@ -69,13 +67,13 @@ module.exports.deleteCard = (req, res) => {
       throw error;
     })
     .then((card) => {
+      if (!card) {
+        res.status(404).send({ message: "нет карточки с таким id" });
+      }
       res.status(200).send({ message: "карточка удалена", card });
     })
     .catch((err) => {
       switch (err.name) {
-        case "ValidationError":
-          res.status(400).send({ message: err.message });
-          break;
         case "CastError":
           res.status(404).send({ message: "нет карточки с таким id" });
           break;
@@ -102,9 +100,6 @@ module.exports.likeCard = (req, res) => {
     })
     .catch((err) => {
       switch (err.name) {
-        case "ValidationError":
-          res.status(400).send({ message: err.message });
-          break;
         case "CastError":
           res.status(404).send({ message: "нет карточки с таким id" });
           break;
@@ -130,9 +125,6 @@ module.exports.dislikeCard = (req, res) => {
     })
     .catch((err) => {
       switch (err.name) {
-        case "ValidationError":
-          res.status(400).send({ message: err.message });
-          break;
         case "CastError":
           res.status(404).send({ message: "нет карточки с таким id" });
           break;

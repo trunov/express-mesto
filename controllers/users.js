@@ -6,9 +6,6 @@ module.exports.getUsers = (req, res) => {
     .then((users) => res.status(200).send({ data: users }))
     .catch((err) => {
       switch (err.name) {
-        case "ValidationError":
-          res.status(400).send({ message: err.message });
-          break;
         case "DocumentNotFoundError":
           res.status(404).send({ message: "пользователи не найдены" });
           break;
@@ -30,9 +27,6 @@ module.exports.getUser = (req, res) => {
     .then((user) => res.send(user))
     .catch((err) => {
       switch (err.name) {
-        case "ValidationError":
-          res.status(400).send({ message: err.message });
-          break;
         case "CastError":
           res.status(404).send({ message: "Нет пользователя с таким id" });
           break;
