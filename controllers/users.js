@@ -24,7 +24,12 @@ module.exports.getUser = (req, res) => {
       const error = new Error("CastError");
       throw error;
     })
-    .then((user) => res.send(user))
+    .then((user) => {
+      if (!user) {
+        res.status(404).send({ message: "нет пользователя с таким id" });
+      }
+      res.send(user);
+    })
     .catch((err) => {
       switch (err.name) {
         case "CastError":
