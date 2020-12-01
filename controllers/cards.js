@@ -3,23 +3,21 @@ const Card = require("../models/card");
 module.exports.getCards = (req, res) => {
   Card.find()
     .orFail(() => {
-      const error = new Error("CastError");
-      throw error;
+      const error404 = new Error("Карточки не найдены");
+      error404.statusCode = 404;
+      throw error404;
     })
     .then((cards) => {
-      if (!cards) {
-        res.status(404).send({ message: "нет карточек" });
-      }
       res.send(cards);
     })
-
     .catch((err) => {
-      switch (err.name) {
-        case "CastError":
-          res.status(404).send({ message: "Нет карточек" });
-          break;
-        default:
-          res.status(500).send({ message: "Ошибка на стороне сервера" });
+      if (err.statusCode === 404) {
+        res.status(404).send({ message: "Нет карточки с таким id" });
+        // айдишник валидный но ничего не найдено - 404
+      } else if (err.name === "CastError") {
+        res.status(400).send({ message: err.message });
+      } else {
+        res.status(500).send({ message: "Ошибка на стороне сервера" });
       }
     });
 };
@@ -27,20 +25,21 @@ module.exports.getCards = (req, res) => {
 module.exports.getCard = (req, res) => {
   Card.findById(req.params.id)
     .orFail(() => {
-      const error = new Error("CastError");
-      throw error;
+      const error404 = new Error("Карточки не найдены");
+      error404.statusCode = 404;
+      throw error404;
     })
-    .then((card) => res.send(card))
+    .then((card) => {
+      res.send(card);
+    })
     .catch((err) => {
-      switch (err.name) {
-        case "ValidationError":
-          res.status(400).send({ message: err.message });
-          break;
-        case "CastError":
-          res.status(404).send({ message: "Нет карточки с таким id" });
-          break;
-        default:
-          res.status(500).send({ message: "Ошибка на стороне сервера" });
+      if (err.statusCode === 404) {
+        res.status(404).send({ message: "Нет карточки с таким id" });
+        // айдишник валидный но ничего не найдено - 404
+      } else if (err.name === "CastError") {
+        res.status(400).send({ message: "invalid id" });
+      } else {
+        res.status(500).send({ message: "Ошибка на стороне сервера" });
       }
     });
 };
@@ -50,12 +49,10 @@ module.exports.createCard = (req, res) => {
   Card.create({ name, link, owner: req.user._id })
     .then((newCard) => res.send(newCard))
     .catch((err) => {
-      switch (err.name) {
-        case "ValidationError":
-          res.status(400).send({ message: err.message });
-          break;
-        default:
-          res.status(500).send({ message: "Ошибка на стороне сервера" });
+      if (err.name === "CastError") {
+        res.status(400).send({ message: "invalid id" });
+      } else {
+        res.status(500).send({ message: "Ошибка на стороне сервера" });
       }
     });
 };
@@ -63,22 +60,21 @@ module.exports.createCard = (req, res) => {
 module.exports.deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.id)
     .orFail(() => {
-      const error = new Error("CastError");
-      throw error;
+      const error404 = new Error("Карточка не найдена");
+      error404.statusCode = 404;
+      throw error404;
     })
-    .then((card) => {
-      if (!card) {
-        res.status(404).send({ message: "нет карточки с таким id" });
-      }
-      res.status(200).send({ message: "карточка удалена", card });
+    .then((deleted) => {
+      res.send(deleted);
     })
     .catch((err) => {
-      switch (err.name) {
-        case "CastError":
-          res.status(404).send({ message: "нет карточки с таким id" });
-          break;
-        default:
-          res.status(500).send({ message: "Ошибка на стороне сервера" });
+      if (err.statusCode === 404) {
+        res.status(404).send({ message: "Нет карточки с таким id" });
+        // айдишник валидный но ничего не найдено - 404
+      } else if (err.name === "CastError") {
+        res.status(400).send({ message: "invalid id" });
+      } else {
+        res.status(500).send({ message: "Ошибка на стороне сервера" });
       }
     });
 };
@@ -90,8 +86,9 @@ module.exports.likeCard = (req, res) => {
     { new: true },
   )
     .orFail(() => {
-      const error = new Error("CastError");
-      throw error;
+      const error404 = new Error("Карточка не найдена");
+      error404.statusCode = 404;
+      throw error404;
     })
     .then((card) => {
       res
@@ -99,15 +96,17 @@ module.exports.likeCard = (req, res) => {
         .send({ message: "лайк был поставлен данной карточке", card });
     })
     .catch((err) => {
-      switch (err.name) {
-        case "CastError":
-          res.status(404).send({ message: "нет карточки с таким id" });
-          break;
-        default:
-          res.status(500).send({ message: "Ошибка на стороне сервера" });
+      if (err.statusCode === 404) {
+        res.status(404).send({ message: "Нет карточки с таким id" });
+        // айдишник валидный но ничего не найдено - 404
+      } else if (err.name === "CastError") {
+        res.status(400).send({ message: "invalid id" });
+      } else {
+        res.status(500).send({ message: "Ошибка на стороне сервера" });
       }
     });
 };
+
 module.exports.dislikeCard = (req, res) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
@@ -115,8 +114,9 @@ module.exports.dislikeCard = (req, res) => {
     { new: true },
   )
     .orFail(() => {
-      const error = new Error("CastError");
-      throw error;
+      const error404 = new Error("Карточка не найдена");
+      error404.statusCode = 404;
+      throw error404;
     })
     .then((card) => {
       res
@@ -124,12 +124,13 @@ module.exports.dislikeCard = (req, res) => {
         .send({ message: "дизлайк был поставлен данной карточке", card });
     })
     .catch((err) => {
-      switch (err.name) {
-        case "CastError":
-          res.status(404).send({ message: "нет карточки с таким id" });
-          break;
-        default:
-          res.status(500).send({ message: "Ошибка на стороне сервера" });
+      if (err.statusCode === 404) {
+        res.status(404).send({ message: "Нет карточки с таким id" });
+        // айдишник валидный но ничего не найдено - 404
+      } else if (err.name === "CastError") {
+        res.status(400).send({ message: "invalid id" });
+      } else {
+        res.status(500).send({ message: "Ошибка на стороне сервера" });
       }
     });
 };
