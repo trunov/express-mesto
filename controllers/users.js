@@ -56,7 +56,9 @@ module.exports.updateUser = (req, res) => {
       }
     })
     .catch((err) => {
-      if (err.name === "CastError") {
+      if (err.name === "ValidationError") {
+        res.status(500).send({ message: err.message });
+      } else if (err.name === "CastError") {
         res.status(400).send({ message: "invalid id" });
       } else {
         res.status(500).send({ message: "Ошибка на стороне сервера" });
@@ -75,7 +77,9 @@ module.exports.updateAvatar = (req, res) => {
       }
     })
     .catch((err) => {
-      if (err.name === "CastError") {
+      if (err.name === "ValidationError") {
+        res.status(500).send({ message: err.message });
+      } else if (err.name === "CastError") {
         res.status(400).send({ message: "invalid id" });
       } else {
         res.status(500).send({ message: "Ошибка на стороне сервера" });
